@@ -3,6 +3,7 @@ import type { AppState, Broker, EngagementEntry, Snippet, Webinar, Stage, DataSo
 import { getInitialState, saveToLocalStorage, saveTheme, pickFolder, writeEngagementLog, disconnectFolder } from './storage'
 import { uid, isoDate } from './utils'
 import { seedBrokers, seedLog, seedSnippets, seedWebinars } from './seed'
+import { dbg } from './debug'
 
 interface StoreActions {
   addBroker: (b: Omit<Broker, 'id' | 'created_at'>) => Broker
@@ -50,9 +51,12 @@ export const useStore = create<Store>((set, get) => {
       folderName: s.folderName,
     })
     if (s.dataSource === 'folder') {
-      writeEngagementLog(s.log).catch(err => console.error('folder sync failed', err))
+      writeEngagementLog(s.log).catch(err => {
+        dbg.error('storage', `folder sync failed: ${err instanceof Error ? err.message : String(err)}`, err)
+      })
     }
   }
+
 
   return {
     ...initial,
@@ -179,6 +183,34 @@ export const useStore = create<Store>((set, get) => {
       persist()
     },
   }
+})
+
+// Diff-based logger: any state change goes to the debug bus
+let prevSnapshot = useStore.getState()
+useStore.subscribe(state => {
+  const diff: Record<string, { from: number; to: number }> = {}
+  if (state.brokers !== prevSnapshot.brokers && state.brokers.length !== prevSnapshot.brokers.length) {
+    diff.brokers = { from: prevSnapshot.brokers.length, to: state.brokers.length }
+  }
+  if (state.log !== prevSnapshot.log && state.log.length !== prevSnapshot.log.length) {
+    diff.log = { from: prevSnapshot.log.length, to: state.log.length }
+  }
+  if (state.snippets !== prevSnapshot.snippets && state.snippets.length !== prevSnapshot.snippets.length) {
+    diff.snippets = { from: prevSnapshot.snippets.length, to: state.snippets.length }
+  }
+  if (state.webinars !== prevSnapshot.webinars && state.webinars.length !== prevSnapshot.webinars.length) {
+    diff.webinars = { from: prevSnapshot.webinars.length, to: state.webinars.length }
+  }
+  if (state.theme !== prevSnapshot.theme) {
+    dbg.action('store', `theme → ${state.theme}`)
+  }
+  if (state.dataSource !== prevSnapshot.dataSource) {
+    dbg.action('store', `dataSource → ${state.dataSource}`, { folderName: state.folderName })
+  }
+  if (Object.keys(diff).length > 0) {
+    dbg.action('store', 'mutation', diff)
+  }
+  prevSnapshot = state
 })
 
 // touched to silence unused-import linter for isoDate; kept for future extensions

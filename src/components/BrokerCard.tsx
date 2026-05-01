@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Users, Calendar, MoreVertical } from 'lucide-react'
+import { Users, Calendar, GripVertical } from 'lucide-react'
 import type { Broker, EngagementEntry } from '@/lib/types'
 import { Badge } from './ui/Badge'
 import { cn, daysSince, stalenessTone, stalenessClasses, formatRelative } from '@/lib/utils'
@@ -32,55 +32,57 @@ export function BrokerCard({ broker, log, onClick, isOverlay = false }: Props) {
       ref={setNodeRef}
       style={style}
       className={cn(
-        'group rounded-md border border-border bg-card p-3 shadow-sm hover:shadow-md hover:border-primary/40 cursor-grab active:cursor-grabbing transition-all',
+        'group relative rounded-md border border-border bg-card p-3 pl-7 shadow-sm hover:shadow-md hover:border-primary/40 transition-all',
         isDragging && 'opacity-30',
-        isOverlay && 'shadow-xl ring-2 ring-primary scale-105 cursor-grabbing',
+        isOverlay && 'shadow-xl ring-2 ring-primary scale-105',
       )}
-      {...attributes}
-      {...listeners}
     >
-      <div
-        className="flex items-start justify-between gap-2"
-        onPointerDown={e => e.stopPropagation()}
-        onClick={onClick}
-        role="button"
-        tabIndex={0}
-        onKeyDown={e => { if (e.key === 'Enter') onClick() }}
+      <button
+        type="button"
+        aria-label={`Drag ${broker.name}`}
+        title="Drag to move stage"
+        className={cn(
+          'absolute left-0 top-0 bottom-0 w-6 grid place-items-center text-muted-foreground/40 hover:text-primary hover:bg-secondary/60 rounded-l-md',
+          'cursor-grab active:cursor-grabbing touch-none',
+          isOverlay && 'cursor-grabbing text-primary',
+        )}
+        {...attributes}
+        {...listeners}
       >
-        <div className="min-w-0 flex-1">
+        <GripVertical className="h-4 w-4" />
+      </button>
+
+      <button
+        type="button"
+        onClick={onClick}
+        className="block w-full text-left focus:outline-none"
+      >
+        <div className="min-w-0">
           <div className="font-medium text-sm leading-tight truncate">{broker.name}</div>
           <div className="text-xs text-muted-foreground truncate">{broker.brokerage}</div>
         </div>
-        <button
-          type="button"
-          aria-label="Open broker detail"
-          className="opacity-0 group-hover:opacity-100 p-1 -m-1 rounded hover:bg-secondary"
-          onClick={onClick}
-        >
-          <MoreVertical className="h-3.5 w-3.5" />
-        </button>
-      </div>
 
-      <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-        {broker.agent_count !== undefined && (
-          <Badge className="bg-secondary text-foreground">
-            <Users className="h-3 w-3" />
-            {broker.agent_count}
-          </Badge>
-        )}
-        {days !== null && (
-          <Badge className={stalenessClasses(tone)}>
-            <Calendar className="h-3 w-3" />
-            {formatRelative(lastEntry?.date)}
-          </Badge>
-        )}
-      </div>
-
-      {broker.next_action && (
-        <div className="mt-2 pt-2 border-t border-border/60 text-xs text-muted-foreground line-clamp-2">
-          <span className="font-medium text-foreground">Next:</span> {broker.next_action}
+        <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+          {broker.agent_count !== undefined && (
+            <Badge className="bg-secondary text-foreground">
+              <Users className="h-3 w-3" />
+              {broker.agent_count}
+            </Badge>
+          )}
+          {days !== null && (
+            <Badge className={stalenessClasses(tone)}>
+              <Calendar className="h-3 w-3" />
+              {formatRelative(lastEntry?.date)}
+            </Badge>
+          )}
         </div>
-      )}
+
+        {broker.next_action && (
+          <div className="mt-2 pt-2 border-t border-border/60 text-xs text-muted-foreground line-clamp-2">
+            <span className="font-medium text-foreground">Next:</span> {broker.next_action}
+          </div>
+        )}
+      </button>
     </div>
   )
 }

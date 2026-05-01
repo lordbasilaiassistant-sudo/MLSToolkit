@@ -14,6 +14,8 @@ import {
 import { Mail, Phone, Users, Plus, Trash2, Pencil, ExternalLink } from 'lucide-react'
 import { formatDate, formatRelative, isoDate, cn } from '@/lib/utils'
 import { BrokerForm } from './BrokerForm'
+import { AIButton } from './AIButton'
+import { ENGAGEMENT_TYPE_LABELS as TYPE_LABELS_FOR_AI } from '@/lib/constants'
 
 interface Props {
   broker: Broker | null
@@ -120,6 +122,13 @@ export function BrokerDetailPanel({ broker, onClose }: Props) {
               {broker.next_action_date && <span className="ml-2 opacity-70">· due {formatDate(broker.next_action_date)}</span>}
             </div>
           )}
+
+          <div className="mt-3">
+            <AIButton
+              label="Draft next email"
+              prompt={`Draft a short email to ${broker.name} at ${broker.brokerage}. Stage: ${broker.stage}. Last 5 touchpoints:\n${history.slice(0, 5).map(h => `- ${h.date}: ${TYPE_LABELS_FOR_AI[h.type]} → ${h.status}${h.notes ? ' — ' + h.notes : ''}`).join('\n') || '(none yet)'}\n${broker.next_action ? `\nNext action note: ${broker.next_action}` : ''}\n${broker.notes ? `\nMy notes on this broker: ${broker.notes}` : ''}\n\nWrite the email body only. Around 80 words. Conversational, specific. Don't add a signature.`}
+            />
+          </div>
         </div>
 
         <div className="px-6 py-4 border-b border-border">

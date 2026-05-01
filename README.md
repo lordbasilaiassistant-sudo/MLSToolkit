@@ -4,7 +4,7 @@ A beautiful, free-to-host **broker engagement cockpit** for real estate partners
 
 Built to pair with the [Cowork skills toolkit](#pairs-with-cowork-skills) — both surfaces read and write the same `engagement-log.csv`.
 
-[**→ Live demo**](https://drlordbasil.github.io/MLSToolkit/)
+[**→ Live demo**](https://lordbasilaiassistant-sudo.github.io/MLSToolkit/)
 
 ## What it does
 

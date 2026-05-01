@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Plus, Star, Copy, Check, Trash2, Pencil, Search } from 'lucide-react'
 import { useStore } from '@/lib/store'
 import { SNIPPET_CATEGORIES, SNIPPET_CATEGORY_LABELS } from '@/lib/constants'
@@ -9,6 +9,7 @@ import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Dialog } from '@/components/ui/Dialog'
+import { AIButton } from '@/components/AIButton'
 import { cn, formatRelative } from '@/lib/utils'
 
 export function Library() {
@@ -144,13 +145,13 @@ function SnippetForm({ open, onOpenChange, snippet, onSubmit }: {
   onSubmit: (s: { title: string; category: SnippetCategory; body: string; starred?: boolean }) => void
 }) {
   const [form, setForm] = useState({ title: '', category: 'general' as SnippetCategory, body: '', starred: false })
-  useState(() => {
-    if (snippet) setForm({ title: snippet.title, category: snippet.category, body: snippet.body, starred: snippet.starred })
-  })
-  // Re-init when snippet changes
-  useMemo(() => {
-    if (snippet) setForm({ title: snippet.title, category: snippet.category, body: snippet.body, starred: snippet.starred })
-    else if (open) setForm({ title: '', category: 'general', body: '', starred: false })
+  useEffect(() => {
+    if (!open) return
+    if (snippet) {
+      setForm({ title: snippet.title, category: snippet.category, body: snippet.body, starred: snippet.starred })
+    } else {
+      setForm({ title: '', category: 'general', body: '', starred: false })
+    }
   }, [snippet, open])
 
   return (
@@ -170,6 +171,13 @@ function SnippetForm({ open, onOpenChange, snippet, onSubmit }: {
           <label className="text-xs font-medium text-muted-foreground mb-1 block">Body</label>
           <Textarea rows={10} value={form.body} onChange={e => setForm({ ...form, body: e.target.value })} placeholder="Use {{first_name}} or other placeholders. Plain text — agents copy and forward as-is." />
         </div>
+        <AIButton
+          label={form.body ? 'Improve this snippet' : 'Draft a snippet'}
+          prompt={form.body
+            ? `Improve this ${SNIPPET_CATEGORY_LABELS[form.category].toLowerCase()} snippet. Keep it forwardable (an agent will paste it to a consumer). Make it tighter, more concrete, more useful. Return ONLY the rewritten snippet — no preamble, no commentary.\n\nCurrent snippet:\n${form.body}`
+            : `Draft a forwardable ${SNIPPET_CATEGORY_LABELS[form.category].toLowerCase()} snippet for real estate agents to send their consumers. Title: "${form.title || 'untitled'}". ~120 words. Use {{first_name}}, {{address}} placeholders where natural. Return ONLY the snippet body.`}
+          onResult={text => setForm(f => ({ ...f, body: text }))}
+        />
       </div>
       <div className="flex justify-end gap-2 pt-2">
         <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>

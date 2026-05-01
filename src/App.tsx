@@ -1,7 +1,11 @@
 import { useEffect, lazy, Suspense } from 'react'
 import { HashRouter, Routes, Route } from 'react-router-dom'
 import { AppShell } from './components/layout/AppShell'
+import { ErrorBoundary } from './components/ErrorBoundary'
+import { DebugPanel } from './components/DebugPanel'
+import { AIAssistant } from './components/AIAssistant'
 import { useStore } from './lib/store'
+import { dbg } from './lib/debug'
 
 const Pipeline = lazy(() => import('./routes/Pipeline').then(m => ({ default: m.Pipeline })))
 const Directory = lazy(() => import('./routes/Directory').then(m => ({ default: m.Directory })))
@@ -26,22 +30,27 @@ function App() {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
+    dbg.info('app', 'mounted', { theme })
   }, [theme])
 
   return (
-    <HashRouter>
-      <AppShell>
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
-            <Route path="/" element={<Pipeline />} />
-            <Route path="/directory" element={<Directory />} />
-            <Route path="/activity" element={<Activity />} />
-            <Route path="/library" element={<Library />} />
-            <Route path="/webinars" element={<Webinars />} />
-          </Routes>
-        </Suspense>
-      </AppShell>
-    </HashRouter>
+    <ErrorBoundary>
+      <HashRouter>
+        <AppShell>
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
+              <Route path="/" element={<Pipeline />} />
+              <Route path="/directory" element={<Directory />} />
+              <Route path="/activity" element={<Activity />} />
+              <Route path="/library" element={<Library />} />
+              <Route path="/webinars" element={<Webinars />} />
+            </Routes>
+          </Suspense>
+        </AppShell>
+        <AIAssistant />
+        <DebugPanel />
+      </HashRouter>
+    </ErrorBoundary>
   )
 }
 
